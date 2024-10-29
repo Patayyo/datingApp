@@ -1,0 +1,25 @@
+# .air.toml
+# Путь до папки с исходным кодом
+root = "."
+# Команда для сборки и запуска
+cmd = "go build -o ./tmp/server ./cmd/server/main.go && .tmp/server"
+# Папка для хранения временных файлов
+tmp_dir = "./tmp"
+
+[build]
+  bin = "tmp/main" # путь к временной бинарной папке
+  cmd = "go build -o tmp/main ./cmd/server/main.go"
+  include_ext = ["go"]
+  exclude_dir = ["db/data", "tmp"] # Исключаем базы данных
+
+# Путь к папке с исходными файлами, которые нужно отслеживать
+[watch]
+  directories = ["."]
+  # Игнорируемые файлы и папки
+  ignore = ["tmp", "vendor"]
+  include_ext = ["**/*.go", "tpl", "html", "sql"]
+  exclude = ["tmp/**", "db/data/**"]
+
+[color]
+  main = "cyan"
+  watcher = "yellow"
