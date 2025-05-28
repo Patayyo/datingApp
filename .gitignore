@@ -5,4 +5,14 @@
 *.test
 *.yaml
 
-/db/data
+# IDEs
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# Env
+.env
+
+/db/data/*
