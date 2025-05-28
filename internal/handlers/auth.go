@@ -3,6 +3,7 @@ package handlers
 import (
 	"datingApp/pkg/model"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -17,7 +18,7 @@ type AuthHandler struct {
 }
 
 // Секретный ключ для подписи JWT токенов
-var JWTSecretKey = []byte("app.Secret")
+var JWTSecretKey = []byte(os.Getenv("JWT_SECRET"))
 
 // hashPassword хеширует пароль перед его сохранением в базу данных
 func hashPassword(password string) (string, error) {
@@ -31,12 +32,12 @@ func checkPaswwordHash(password, hash string) bool {
 	return err == nil
 }
 
-//GenerateToken создает JWT-токен для пользователя с указанием срока действия
+// GenerateToken создает JWT-токен для пользователя с указанием срока действия
 func GenerateToken(user model.User) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour) // Установка времени действия токена на 24 часа
 	claims := jwt.MapClaims{
 		"userID": user.ID,
-		"exp": expirationTime.Unix(), // Время окончания действия токена
+		"exp":    expirationTime.Unix(), // Время окончания действия токена
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(JWTSecretKey)
@@ -59,7 +60,7 @@ func TokenAuthMiddleware() gin.HandlerFunc {
 		}
 
 		// Проверяем, является ли токен действительным
-		token, err := jwt.Parse(tokenString, func(token * jwt.Token) (interface{}, error) {
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, jwt.NewValidationError("Invalid signing method", jwt.ValidationErrorMalformed)
 			}
@@ -124,7 +125,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	// Создание нового пользователя
 	user = model.User{
 		Username: input.Username,
-		Email: input.Email,
+		Email:    input.Email,
 		Password: hashedPassword,
 	}
 
@@ -135,26 +136,26 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	// Создание профиля для нового пользователя
 	profile := model.Profile{
-		UserID: user.ID,
-		Bio: "",
+		UserID:    user.ID,
+		Bio:       "",
 		Interests: "",
-		Age: "",
-		Gender: "",
-		Location: "",
+		Age:       "",
+		Gender:    "",
+		Location:  "",
 	}
 
 	if err := h.DB.Create(&profile).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed ti create profile"})
 		return
 	}
-	
+
 	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
 }
 
 // Login входит в систему
 func (h *AuthHandler) Login(c *gin.Context) {
 	var input struct {
-		Email string `json:"email" binding:"required,email"`
+		Email    string `json:"email" binding:"required,email"`
 		Password string `json:"password" binding:"required"`
 	}
 
@@ -192,6 +193,6 @@ func (h *AuthHandler) AuthRoutes(router *gin.Engine) {
 	auth := router.Group("/auth")
 	{
 		auth.POST("/register", h.Register) // Маршрут для регистрации
-		auth.POST("/login", h.Login) // Маршрут для входа
+		auth.POST("/login", h.Login)       // Маршрут для входа
 	}
 }
